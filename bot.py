@@ -30,6 +30,7 @@ async def on_message(message):
         await bot.send_message(message.channel, "Pong!")
     elif message.content == "!instantxp":
         await bot.send_message(message.channel, "Gave you 100 XP instantly")
+        xp.awardXP(message.author.id, 100)
     elif message.content == "!xp":
         await bot.send_message(message.channel, "You have {} XP.".format(xp.getXP(message.author.id)))
 
