@@ -1,0 +1,10 @@
+{
+  "<channel id here>": {
+    "mine": {
+      "resource": "",
+      "quantity": "",
+      "xp": 0,
+      "message": "You mined ${quantity} ${resource} and got ${xp} XP!"
+    }
+  }
+}

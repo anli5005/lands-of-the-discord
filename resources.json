@@ -1,0 +1,14 @@
+[
+  {
+    "id": "lavastone",
+    "singular": "Lava Stone",
+    "plural": "Lava Stones",
+    "emoji": "🌋"
+  },
+  {
+    "id": "fish",
+    "singular": "Fish",
+    "plural": "Fish",
+    "emoji": "🐠"
+  }
+]
