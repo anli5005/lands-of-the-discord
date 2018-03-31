@@ -1,5 +1,12 @@
 [
   {
+    "id": "money",
+    "singular": "Onyx",
+    "plural": "Onyx",
+    "emoji": "💵",
+    "alwaysInInventory": true
+  },
+  {
     "id": "lavastone",
     "singular": "Lava Stone",
     "plural": "Lava Stones",
@@ -10,5 +17,11 @@
     "singular": "Fish",
     "plural": "Fish",
     "emoji": "🐠"
+  },
+  {
+    "id": "bitcoin",
+    "singular": "Bitcoin",
+    "plural": "Bitcoin",
+    "emoji": "Ƀ"
   }
 ]

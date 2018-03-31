@@ -26,4 +26,6 @@ class ResourcesManager(Manager):
             for resource in self.resources:
                 if resource["id"] in resources and resources[resource["id"]] != 0:
                     inventory.append({"resource": resource["id"], "count": resources[resource["id"]]})
+                elif "alwaysInInventory" in resource and resource["alwaysInInventory"]:
+                    inventory.append({"resource": resource["id"], "count": 0})
         return inventory

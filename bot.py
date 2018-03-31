@@ -1,5 +1,6 @@
 import asyncio
 import discord
+from discord.ext import commands
 import json
 from pymongo import MongoClient
 
@@ -9,10 +10,12 @@ from mining import MineManager
 
 mongoURL = "mongodb://localhost:27017"
 token = "SEE-CONFIG-JSON"
+roles = {"viewInventories": "", "resetCooldowns": ""}
 with open("config.json") as f:
     config = json.loads(f.read())
     mongoURL = config["mongo"]
     token = config["token"]
+    roles = config["roles"]
 client = MongoClient(mongoURL)
 db = client.lotd
 
@@ -24,10 +27,16 @@ mines = {}
 with open("mines.json") as f:
     mines = json.loads(f.read())
 
-bot = discord.Client()
-xp = XPManager(db)
+bot = commands.Bot(command_prefix = "!")
+xpm = XPManager(db)
 resources = ResourcesManager(db, res)
-mining = MineManager(db, mines, resources, xp)
+mining = MineManager(db, mines, resources, xpm)
+
+def has_permission(member, permission):
+    for role in member.roles:
+        if role.id == roles[permission]:
+            return True
+    return False
 
 @bot.event
 async def on_ready():
@@ -36,24 +45,32 @@ async def on_ready():
     print(bot.user.id)
     print("------")
 
-@bot.event
-async def on_message(message):
-    if message.content == "!ping":
-        await bot.send_message(message.channel, "Pong!")
-    elif message.content == "!instantxp":
-        await bot.send_message(message.channel, "Gave you 100 XP instantly")
-        xp.awardXP(message.author.id, 100)
-    elif message.content == "!xp":
-        await bot.send_message(message.channel, "You have {} XP.".format(xp.getXP(message.author.id)))
-    elif message.content == "!mine":
-        text = mining.mineChannel(message.author.id, message.channel.id)
-        if text:
-            await bot.send_message(message.channel, text)
-    elif message.content == "!inventory":
-        inventory = resources.getInventory(message.author.id)
-        embed = discord.Embed(title = message.author.name, description = "Inventory")
-        for item in inventory:
-            resource = resources.resourceDict[item["resource"]]
-            embed.add_field(name = "{} {}".format(resource["emoji"], resource["plural"]), value = item["count"])
-        await bot.send_message(message.channel, "<@!{}>, here's your inventory:".format(message.author.id), embed = embed)
+@bot.command()
+async def ping():
+    await bot.say("Pong!")
+
+@bot.command(pass_context = True)
+async def xp(ctx, member: discord.Member = None):
+    if member is None:
+        member = ctx.message.author
+    await bot.say("<@!{}> has {} XP".format(member.id, xpm.getXP(member.id)))
+
+@bot.command(pass_context = True)
+async def mine(ctx):
+    text = mining.mineChannel(ctx.message.author.id, ctx.message.channel.id)
+    if text:
+        await bot.say(text)
+
+@bot.command(pass_context = True)
+async def inventory(ctx, member: discord.Member = None):
+    if (not has_permission(ctx.message.author, "viewInventories")) or member is None:
+        member = ctx.message.author
+    inventory = resources.getInventory(member.id)
+    embed = discord.Embed(title = member.name, description = "Inventory")
+    embed.add_field(name = "🌠 XP", value = xpm.getXP(member.id), inline = False)
+    for item in inventory:
+        resource = resources.resourceDict[item["resource"]]
+        embed.add_field(name = "{} {}".format(resource["emoji"], resource["plural"]), value = item["count"])
+    await bot.send_message(ctx.message.channel, "Here's <@!{}>'s inventory:".format(member.id), embed = embed)
+
 bot.run(token)

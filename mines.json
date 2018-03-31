@@ -22,5 +22,13 @@
     "xp": 5,
     "message": "You mined {quantity} {resource} and got {xp} XP!",
     "cooldown": 1800
+  },
+  "429452153346588690": {
+    "id": "cyberspace-bitcoin",
+    "resource": "money",
+    "quantity": 1,
+    "xp": 5,
+    "message": "You mined {quantity} {resource} and got {xp} XP!",
+    "cooldown": 14400
   }
 }
