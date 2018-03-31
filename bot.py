@@ -68,9 +68,15 @@ async def inventory(ctx, member: discord.Member = None):
     inventory = resources.getInventory(member.id)
     embed = discord.Embed(title = member.name, description = "Inventory")
     embed.add_field(name = "🌠 XP", value = xpm.getXP(member.id), inline = False)
+    embeds = [embed]
     for item in inventory:
         resource = resources.resourceDict[item["resource"]]
         embed.add_field(name = "{} {}".format(resource["emoji"], resource["plural"]), value = item["count"])
-    await bot.send_message(ctx.message.channel, "Here's <@!{}>'s inventory:".format(member.id), embed = embed)
+        if len(embed.fields) >= 25:
+            embed = discord.Embed(title = member.name, description = "Inventory (continued)")
+            embeds.append(embed)
+    await bot.say("Here's <@!{}>'s inventory:".format(member.id))
+    for e in embeds:
+        await bot.send_message(ctx.message.channel, embed = e)
 
 bot.run(token)
