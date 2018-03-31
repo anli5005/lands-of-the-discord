@@ -79,4 +79,22 @@ async def inventory(ctx, member: discord.Member = None):
     for e in embeds:
         await bot.send_message(ctx.message.channel, embed = e)
 
+@bot.command(pass_context = True)
+async def give(ctx, member: discord.Member, count: int, * res: str):
+    resource = resources.resolveResource(" ".join(res))
+    if resource:
+        if count > 0:
+            if resources.getResource(ctx.message.author.id, resource) >= count:
+                resources.updateResource(ctx.message.author.id, resource, -1 * count)
+                resources.updateResource(member.id, resource, count)
+                await bot.say("Gave {} {} to <@!{}>".format(count, resources.resourceDict[resource]["singular" if count == 1 else "plural"], member.id))
+            else:
+                await bot.say("You don't have enough {}.".format(resources.resourceDict[resource]["plural"]))
+        elif count == 0:
+            await bot.say("Please supply a positive number.")
+        else:
+            await bot.say("Woah woah woah! What are you trying to pull?!")
+    else:
+        await bot.say("That resource doesn't exist.")
+
 bot.run(token)

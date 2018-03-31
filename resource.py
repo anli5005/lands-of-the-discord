@@ -29,3 +29,10 @@ class ResourcesManager(Manager):
                 elif "alwaysInInventory" in resource and resource["alwaysInInventory"]:
                     inventory.append({"resource": resource["id"], "count": 0})
         return inventory
+
+    def resolveResource(self, message):
+        text = message.lower()
+        for resource in self.resources:
+            if resource["id"].lower() == text or resource["singular"].lower() == text or resource["plural"].lower() == text or resource["emoji"] == message:
+                return resource["id"]
+        return None
