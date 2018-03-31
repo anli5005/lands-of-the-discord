@@ -1,10 +1,26 @@
 {
   "<channel id here>": {
-    "mine": {
-      "resource": "",
-      "quantity": "",
-      "xp": 0,
-      "message": "You mined ${quantity} ${resource} and got ${xp} XP!"
-    }
+    "id": "<id here>",
+    "resource": "",
+    "quantity": 1,
+    "xp": 0,
+    "message": "You mined {quantity} {resource} and got {xp} XP!",
+    "cooldown": 3600
+  },
+  "424975794071404565": {
+    "id": "volcano-lavastone",
+    "resource": "lavastone",
+    "quantity": 1,
+    "xp": 5,
+    "message": "You mined {quantity} {resource} and got {xp} XP!",
+    "cooldown": 3600
+  },
+  "426026880722927618": {
+    "id": "ocean-fishing",
+    "resource": "fish",
+    "quantity": 2,
+    "xp": 5,
+    "message": "You mined {quantity} {resource} and got {xp} XP!",
+    "cooldown": 1800
   }
 }
