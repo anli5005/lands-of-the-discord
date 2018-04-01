@@ -4,13 +4,14 @@ from discord.ext import commands
 import json
 from pymongo import MongoClient
 
+from auditing import AuditingManager
 from xp import XPManager
 from resource import ResourcesManager
 from mining import MineManager
 
 mongoURL = "mongodb://localhost:27017"
 token = "SEE-CONFIG-JSON"
-roles = {"viewInventories": "", "resetCooldowns": ""}
+roles = {"viewInventories": "", "resetCooldowns": "", "editInventories": ""}
 with open("config.json") as f:
     config = json.loads(f.read())
     mongoURL = config["mongo"]
@@ -31,6 +32,7 @@ bot = commands.Bot(command_prefix = "!")
 xpm = XPManager(db)
 resources = ResourcesManager(db, res)
 mining = MineManager(db, mines, resources, xpm)
+audit = AuditingManager(db)
 
 def has_permission(member, permission):
     for role in member.roles:
@@ -96,5 +98,29 @@ async def give(ctx, member: discord.Member, count: int, * res: str):
             await bot.say("Woah woah woah! What are you trying to pull?!")
     else:
         await bot.say("That resource doesn't exist.")
+
+@bot.command(pass_context = True)
+async def forcegive(ctx, member: discord.Member, count: int, * res: str):
+    if has_permission(ctx.message.author, "editInventories"):
+        resource = resources.resolveResource(" ".join(res))
+        if resource:
+            audit.log("force_give", ctx.message.author, {"target": member.id, "resource": resource, "count": count})
+            resources.updateResource(member.id, resource, count)
+            await bot.say("Gave {} {} to <@!{}> out of thin air".format(count, resources.resourceDict[resource]["singular" if count == 1 else "plural"], member.id))
+            await bot.say("*Added an entry to the audit log*")
+        else:
+            await bot.say("That resource doesn't exist.")
+    else:
+        await bot.say("You don't have permission to use this command.")
+
+@bot.command(pass_context = True)
+async def resetcooldowns(ctx, member: discord.Member):
+    if has_permission(ctx.message.author, "editInventories"):
+        audit.log("reset_cooldowns", ctx.message.author, {"target": member.id})
+        db.mining.delete_many({"discordID": member.id})
+        await bot.say("Reset mining cooldowns for {}".format(member.name))
+        await bot.say("*Added an entry to the audit log*")
+    else:
+        await bot.say("You don't have permission to use this command.")
 
 bot.run(token)
