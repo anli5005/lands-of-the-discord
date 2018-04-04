@@ -114,6 +114,23 @@ async def forcegive(ctx, member: discord.Member, count: int, * res: str):
         await bot.say("You don't have permission to use this command.")
 
 @bot.command(pass_context = True)
+async def forcexp(ctx, action: str, member: discord.Member, count: int):
+    if has_permission(ctx.message.author, "editInventories"):
+        if action == "add":
+            xpm.awardXP(member.id, count)
+            await bot.say("Forcibly gave {} XP to <@!{}>".format(count, member.id))
+        elif action == "set":
+            xpm.setXP(member.id, count)
+            await bot.say("Forcibly set <@!{}>'s XP to {}".format(member.id, count))
+        else:
+            await bot.say("Usage: `!forcexp (add|set) <member> <xp>`")
+            return
+        audit.log("force_xp", ctx.message.author, {"target": member.id, "action": action, "count": count})
+        await bot.say("*Added an entry to the audit log*")
+    else:
+        await bot.say("You don't have permission to use this command.")
+
+@bot.command(pass_context = True)
 async def resetcooldowns(ctx, member: discord.Member):
     if has_permission(ctx.message.author, "editInventories"):
         audit.log("reset_cooldowns", ctx.message.author, {"target": member.id})
@@ -122,5 +139,9 @@ async def resetcooldowns(ctx, member: discord.Member):
         await bot.say("*Added an entry to the audit log*")
     else:
         await bot.say("You don't have permission to use this command.")
+
+@xpm.onLevelUp
+def levelUp():
+    print("Level up!")
 
 bot.run(token)
