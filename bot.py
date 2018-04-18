@@ -2,6 +2,7 @@ import asyncio
 import discord
 from discord.ext import commands
 import json
+import math
 from pymongo import MongoClient
 
 from auditing import AuditingManager
@@ -12,24 +13,30 @@ from mining import MineManager
 mongoURL = "mongodb://localhost:27017"
 token = "SEE-CONFIG-JSON"
 roles = {"viewInventories": "", "resetCooldowns": "", "editInventories": ""}
-with open("config.json") as f:
+exponent = 1.5
+quitcommand = False
+levelupchannel = ""
+with open("config.json", encoding = "utf-8") as f:
     config = json.loads(f.read())
     mongoURL = config["mongo"]
     token = config["token"]
     roles = config["roles"]
+    exponent = config["levelUpExponent"]
+    quitcommand = config["quitCommand"]
+    levelupchannel = config["levelUpChannel"]
 client = MongoClient(mongoURL)
 db = client.lotd
 
 res = []
-with open("resources.json") as f:
+with open("resources.json", encoding = "utf-8") as f:
     res = json.loads(f.read())
 
 mines = {}
-with open("mines.json") as f:
+with open("mines.json", encoding = "utf-8") as f:
     mines = json.loads(f.read())
 
 bot = commands.Bot(command_prefix = "!")
-xpm = XPManager(db)
+xpm = XPManager(db, exponent)
 resources = ResourcesManager(db, res)
 mining = MineManager(db, mines, resources, xpm)
 audit = AuditingManager(db)
@@ -59,7 +66,7 @@ async def xp(ctx, member: discord.Member = None):
 
 @bot.command(pass_context = True)
 async def mine(ctx):
-    text = mining.mineChannel(ctx.message.author.id, ctx.message.channel.id)
+    text = await mining.mineChannel(ctx.message.author.id, ctx.message.channel.id)
     if text:
         await bot.say(text)
 
@@ -69,7 +76,8 @@ async def inventory(ctx, member: discord.Member = None):
         member = ctx.message.author
     inventory = resources.getInventory(member.id)
     embed = discord.Embed(title = member.name, description = "Inventory")
-    embed.add_field(name = "🌠 XP", value = xpm.getXP(member.id), inline = False)
+    xp = xpm.getXP(member.id)
+    embed.add_field(name = "🌠 XP", value = "{} (Lvl {})".format(xp, math.floor(xpm.getLevelFromXP(xp))), inline = False)
     embeds = [embed]
     for item in inventory:
         resource = resources.resourceDict[item["resource"]]
@@ -117,7 +125,7 @@ async def forcegive(ctx, member: discord.Member, count: int, * res: str):
 async def forcexp(ctx, action: str, member: discord.Member, count: int):
     if has_permission(ctx.message.author, "editInventories"):
         if action == "add":
-            xpm.awardXP(member.id, count)
+            await xpm.awardXP(member.id, count)
             await bot.say("Forcibly gave {} XP to <@!{}>".format(count, member.id))
         elif action == "set":
             xpm.setXP(member.id, count)
@@ -140,8 +148,16 @@ async def resetcooldowns(ctx, member: discord.Member):
     else:
         await bot.say("You don't have permission to use this command.")
 
+if quitcommand:
+    @bot.command(pass_context = True)
+    async def quit(ctx):
+        audit.log("quit", ctx.message.author, {})
+        await bot.say("Quitting...")
+        exit()
+
 @xpm.onLevelUp
-def levelUp():
-    print("Level up!")
+async def levelUp(user, level):
+    if levelupchannel != "":
+        await bot.send_message(discord.Object(id = levelupchannel), "<@!{}> has reached level {}!".format(user, level))
 
 bot.run(token)
