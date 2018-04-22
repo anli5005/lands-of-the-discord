@@ -15,6 +15,7 @@ token = "SEE-CONFIG-JSON"
 roles = {"viewInventories": "", "resetCooldowns": "", "editInventories": ""}
 exponent = 1.5
 quitcommand = False
+prefix = "!"
 levelupchannel = ""
 with open("config.json", encoding = "utf-8") as f:
     config = json.loads(f.read())
@@ -24,6 +25,7 @@ with open("config.json", encoding = "utf-8") as f:
     exponent = config["levelUpExponent"]
     quitcommand = config["quitCommand"]
     levelupchannel = config["levelUpChannel"]
+    prefix = config["prefix"]
 client = MongoClient(mongoURL)
 db = client.lotd
 
@@ -35,7 +37,7 @@ mines = {}
 with open("mines.json", encoding = "utf-8") as f:
     mines = json.loads(f.read())
 
-bot = commands.Bot(command_prefix = "!")
+bot = commands.Bot(command_prefix = prefix)
 xpm = XPManager(db, exponent)
 resources = ResourcesManager(db, res)
 mining = MineManager(db, mines, resources, xpm)
